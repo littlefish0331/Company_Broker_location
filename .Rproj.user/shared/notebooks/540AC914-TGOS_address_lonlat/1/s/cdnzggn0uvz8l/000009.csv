@@ -1,0 +1,3 @@
+"0","input <- tmp02[, .(id = .I, Address = clean_addr, "
+"0","                   Response_Address = NA, Response_X = NA, Response_Y = NA)]"
+"0","input"

@@ -1,0 +1,4 @@
+"0","tmp01 <- fread(""../data_v1/address_lonlat.csv"", encoding = ""UTF-8"")"
+"0","tmp02 <- tmp01[, .(id = .I, Name, Type, lon, lat)]"
+"0","tmp02_company <- tmp02[Type==""公司""]"
+"0","tmp02_broker <- tmp02[Type==""券商""]"

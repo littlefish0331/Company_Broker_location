@@ -1,0 +1,249 @@
+---
+title: "TGOS_address_lonlat"
+author: "Author: [Steve, Yu](https://github.com/littlefish0331)"
+date: "`r Sys.setlocale('LC_TIME', 'English'); format(Sys.time(), '%Y %b %d %a, %H:%M:%S')`" 
+output:
+  rmdformats::readthedown:
+    css: style.css
+    self_contained: TRUE
+    thumbnails: FALSE
+    lightbox: TRUE
+    gallery: FALSE
+    highlight: tango #探戈橘
+    code_folding: show
+
+---
+
+```{r setup, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+rm(list = setdiff(ls(), lsf.str())); invisible(gc())
+library(knitr)
+library(kableExtra)
+library(dplyr)
+library(data.table)
+library(Nippon)
+library(stringi)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+File Taregt
+===
+
+使用 TGOS 服務，執行經緯度轉換的服務。
+
+- 上限每日10000筆
+- 去網站上傳符合格式的資料 data_v1/Address_TGOS_sample.csv
+
+## Address_TGOS_sample.csv
+
+```{r}
+TGOS_sample <- fread("../data_v1/Address_TGOS_sample.csv")
+TGOS_sample %>% colnames()
+```
+
+--
+
+## my data transfer to input.csv
+
+加入 **地址預處理**
+
+```{r}
+tmp01 <- fread("../data_v1/address.csv", encoding = "UTF-8")
+colnames(tmp01) <- c("Name", "Address", "Website", "Type")
+```
+
+--
+
+## 地址預處理01
+
+- unicode編碼轉換為UTF-8編碼
+- 全形轉半形
+
+```{r}
+address_tmp <- tmp01$Address %>% 
+  unicode2utf8() %>% 
+  sapply(., zen2han, USE.NAMES = F)
+```
+
+--
+
+## 地址結構觀察
+
+縣市鄉鎮[1]路[2]號[3]樓之XXX，希望整理成，  
+縣市鄉鎮[1]路[2]號。即用正規表示法抓取地址，縮減到"號"，捨去後續的部分。
+
+可能情況如下，要先做分析並排除: 
+
+1. [1]: 路名可能會出現「號、樓」等字
+2. [2]: 可能出現「20,22號」
+
+--
+
+## 地址預處理02 
+
+先檢查每個地址的號在該地址的位置，並抓出號後續的文字。
+
+- 地址中，路名有"號"，後續也有"門牌號"，則以最大長度為主。
+- 地址中，如果沒有號，則為錯誤地址，應該挑出。
+
+```{r}
+tmp01$useless_addr <- address_tmp %>% sapply(., addr.SPby.doornum, useless = T, USE.NAMES = F)
+tmp01$useful_addr <- address_tmp %>% sapply(., addr.SPby.doornum, useless = F, USE.NAMES = F)
+```
+
+觀察後發現，還有以下問題
+
+- 地址為英文: 無解，filter(useless_addr==wrong_address)，然後用 GOOGLE試試看 或 手動查詢。
+- 地址前面有郵遞區號: 12345, (12345)，嘗試用正規表示法解決。
+- 多地址用「、」「，已轉為,」「-」合併。決定保留地一個地址。
+- 地址中的門牌號有「-」的符號，例如: 12-1號。決定修正為「12號」
+
+--
+
+## 地址預處理03
+
+先解決前面有郵遞區號的問題
+
+```{r}
+tmp01$clean_addr <- tmp01$useful_addr %>% sapply(., rm.headpostcode) %>% gsub(" +", "", .)
+```
+
+--
+
+## 地址預處理04
+
+再解決多地址合併以及門牌號問題
+
+- 將連結符號「、」「,」「-」後的文字全部捨去(含)
+- 利用 addr.SPby.doornum()，將地址擷取到號，沒有號的補號字
+
+```{r}
+tmp01$clean_addr <- tmp01$clean_addr %>% sapply(., rm.comb.addr, USE.NAMES = F)
+tmp01$clean_addr <- tmp01$clean_addr %>% 
+  sapply(., addr.SPby.doornum, useless = F) %>% 
+  add.doornum.word(x_vec = .)
+```
+
+--
+
+## 剩餘問題+分開數據
+
+1. 數字國字，例如100號寫成一00號。但是不能全部轉數字，因為路名需要為數字國字。
+2. 英文地址，filter(useless_addr==wrong_address)，手動解決。
+3. 多地址如果用「及」則沒辦法斷開，因為路名或是鄉鎮名可能會含有及字。
+
+```{r}
+tmp02 <- tmp01[useless_addr!="wrong_address"]
+tmp02_others <- tmp01[useless_addr=="wrong_address"]
+```
+
+TGOS 設定如下: 
+
+- 允許模糊比對
+- 不分單雙號
+- 誤差範圍不限制號
+- 鎖定縣市
+- 忽略搜尋皆勾選
+- 多比回傳不限制
+- 就有門牌不勾選
+
+```{r}
+input <- tmp02[, .(id = .I, Address = clean_addr, 
+                   Response_Address = NA, Response_X = NA, Response_Y = NA)]
+input
+# ---
+# 記得要上傳的檔案，必須用 big 編碼
+write.csv(x = input, file = "../data_v1/input.csv", 
+          fileEncoding = "big5", row.names = F)
+```
+
+---
+
+## 修改錯誤地址
+
+發現都是外國公司，放棄清理。
+
+```{r}
+tmp02_others
+tmp02_others$clean_addr <- tmp02_others$useful_addr
+```
+
+\newpage
+
+analysis Address_Finish.csv
+===
+
+v1: 沒有先對地址做處理。
+v2: 有對地址做清理
+
+- 將v2資料和原始資訊合併，也就是增加 Response_Address, Response_X, Response_Y
+- 將Response_Address=="找不到指定的門牌地址。"的資料，拉取和 tmp02_others放置一起。
+- 將多個回傳地址的資訊，取出第一個。
+  - 有的路名，搭配不同鄉鎮里，在一個縣市會有很多條。
+- 剩下的放入 google sheet 中，自動轉經緯度。
+
+```{r}
+tmp03 <- fread("../data_v1/Address_Finish_v2.csv", encoding = "UTF-8")
+```
+
+```{r}
+tmp04 <- cbind(tmp02, tmp03[, !c("id", "Address")])
+```
+
+filter(Response_Address=="找不到指定的門牌地址。")  
+輸出 tmp05_others.csv  
+放到 google sheet 中，自動轉經緯度。
+
+> awesome table
+> google map
+> 
+> https://discourse.looker.com/t/get-latitude-longitude-for-any-location-through-google-sheets-and-plot-these-in-looker/5402
+> 還可以用ip去找經緯度
+
+```{r}
+idx <- (tmp04$Response_Address=="找不到指定的門牌地址。") %>% which
+tmp05 <- tmp04[-idx]
+tmp05_others <- rbind(tmp02_others, 
+                      tmp04[idx][, !c("Response_Address", "Response_X", "Response_Y")])
+fwrite(x = tmp05_others, file = "../data_v1/tmp05_others.csv", row.names = F)
+```
+
+將多個回傳地址的資訊，取出第一個
+
+```{r}
+tmp05$Response_Address <- tmp05$Response_Address %>% 
+  sapply(., take.first.TGOSresult, USE.NAMES = F)
+tmp05$Response_X <- tmp05$Response_X %>% 
+  sapply(., take.first.TGOSresult, USE.NAMES = F)
+tmp05$Response_Y <- tmp05$Response_Y %>% 
+  sapply(., take.first.TGOSresult, USE.NAMES = F)
+```
+
+讀取 google sheet 轉換好的結果
+
+```{r}
+tmp05_others_google <- fread("../data_v1/tmp05_others_geocode_google.csv", encoding = "UTF-8")
+tmp05_others_google
+```
+
+\newpage
+
+合併所有結果，存檔
+
+```{r}
+tmp05 %>% colnames()
+tmp05_others_google %>% colnames()
+tmp06 <- list(tmp05[, .(Name, Address, Website, Type, lon = Response_X, lat = Response_Y)],
+              tmp05_others_google[, .(Name, Address, Website, Type, lon = google_longitude, lat = google_latitude)]) %>% rbindlist()
+fwrite(x = tmp06, file = "../data_v1/address_lonlat.csv", row.names = F)
+```
+
+
+
+END
+===
+
+

@@ -1,0 +1,5 @@
+"0","idx <- (tmp04$Response_Address==""找不到指定的門牌地址。"") %>% which"
+"0","tmp05 <- tmp04[-idx]"
+"0","tmp05_others <- rbind(tmp02_others, "
+"0","                      tmp04[idx][, !c(""Response_Address"", ""Response_X"", ""Response_Y"")])"
+"0","fwrite(x = tmp05_others, file = ""../data_v1/tmp05_others.csv"", row.names = F)"

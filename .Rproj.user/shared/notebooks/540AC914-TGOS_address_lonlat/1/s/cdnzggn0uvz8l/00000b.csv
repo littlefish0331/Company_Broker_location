@@ -1,0 +1,4 @@
+"0","# ---"
+"0","# 記得要上傳的檔案，必須用 big 編碼"
+"0","write.csv(x = input, file = ""../data_v1/input.csv"", "
+"0","          fileEncoding = ""big5"", row.names = F)"

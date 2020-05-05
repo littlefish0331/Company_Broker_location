@@ -1,0 +1,6 @@
+"0","tmp05$Response_Address <- tmp05$Response_Address %>% "
+"0","  sapply(., take.first.TGOSresult, USE.NAMES = F)"
+"0","tmp05$Response_X <- tmp05$Response_X %>% "
+"0","  sapply(., take.first.TGOSresult, USE.NAMES = F)"
+"0","tmp05$Response_Y <- tmp05$Response_Y %>% "
+"0","  sapply(., take.first.TGOSresult, USE.NAMES = F)"

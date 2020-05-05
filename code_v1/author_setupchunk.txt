@@ -1,0 +1,70 @@
+author: "Author: [Steve, Yu](https://github.com/littlefish0331)"
+date: "`r Sys.setlocale('LC_TIME', 'English'); format(Sys.time(), '%Y %b %d %a, %H:%M:%S')`" 
+
+
+
+# ---
+output: 
+  bookdown::html_document2:
+    css: style.css
+    code_folding: show
+    df_print: default
+    toc: TRUE
+    toc_depth: 3
+    toc_float:
+      collapsed: TRUE
+      smooth_scroll: TRUE
+    theme: darkly
+    # theme: lumen
+    # keep_md: TRUE
+
+
+```{r setup, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+rm(list = ls()); gc()
+library(knitr)
+library(kableExtra)
+library(dplyr)
+library(data.table)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+
+# ---
+output:
+  rmdformats::readthedown:
+    css: style.css
+    self_contained: TRUE
+    thumbnails: FALSE
+    lightbox: TRUE
+    gallery: FALSE
+    highlight: tango #探戈橘
+    code_folding: show
+
+# 本次嘗試使用另一種模板，vignettes連結如下
+# https://cran.r-project.org/web/packages/rmdformats/vignettes/introduction.html
+# 而且因為htmltools必須為0.4.0版本
+# 所以無法使用 MROpen 或是 MRClient
+
+
+
+# ---
+htmle格式設定
+http://www.datadreaming.org/post/r-markdown-theme-gallery/
+default, cerulean, journal, flatly, darkly, 
+readable, spacelab, united, cosmo, lumen, 
+paper, sandstone, simplex, yeti
+
+
+
+# ---
+markdown table 排版快速器
+https://www.tablesgenerator.com/markdown_tables#
+
+
+# ---
+<p style="color:yellow">**本套件最準的函式。**</p>
+<font style="color:red">第一個</font>

@@ -1,0 +1,2 @@
+"0","tmp01 <- fread(""../data_v1/address.csv"", encoding = ""UTF-8"")"
+"0","colnames(tmp01) <- c(""Name"", ""Address"", ""Website"", ""Type"")"

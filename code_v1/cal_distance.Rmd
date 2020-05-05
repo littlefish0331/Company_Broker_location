@@ -1,0 +1,97 @@
+---
+title: "cal_distance"
+author: "Author: [Steve, Yu](https://github.com/littlefish0331)"
+date: "`r Sys.setlocale('LC_TIME', 'English'); format(Sys.time(), '%Y %b %d %a, %H:%M:%S')`" 
+output:
+  rmdformats::readthedown:
+    css: style.css
+    self_contained: TRUE
+    thumbnails: FALSE
+    lightbox: TRUE
+    gallery: FALSE
+    highlight: tango #探戈橘
+    code_folding: show
+
+---
+
+```{r setup, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+rm(list = setdiff(ls(), lsf.str())); invisible(gc())
+library(knitr)
+library(kableExtra)
+library(dplyr)
+library(data.table)
+library(Nippon)
+library(stringi)
+library(sp)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+File Taregt
+===
+
+主要就是找到公司附近10公里內的券商，  
+計算公司和券商的距離
+
+原始資料: https://www.nvesto.com/tpe/broker/list
+
+## 讀取資料
+
+```{r}
+tmp01 <- fread("../data_v1/address_lonlat.csv", encoding = "UTF-8")
+tmp02 <- tmp01[, .(id = .I, Name, Type, lon, lat)]
+tmp02_company <- tmp02[Type=="公司"]
+tmp02_broker <- tmp02[Type=="券商"]
+```
+
+## 計算距離
+
+```{r}
+res_tmp <- list()
+i <- 1
+# for (i in 1:nrow(tmp02_company)) {
+for (i in 440:nrow(tmp02_company)) {
+  print(i) #顯示進度
+  tmp_lon <- tmp02_company[i, lon]
+  tmp_lat <- tmp02_company[i, lat]
+  t1 <- tmp02_broker[lon>=tmp_lon-0.2 & lon<=tmp_lon+0.2, 
+                     ][lat>=tmp_lat-0.2 & lat<=tmp_lat+0.2]
+  
+  
+  # ---
+  if (nrow(t1)==0) next()
+  for (ii in 1:nrow(t1)) {
+    t2 <- spDistsN1(pts = as.matrix(t1[, .(lon, lat)]), 
+                    pt = c(tmp_lon, tmp_lat), 
+                    longlat = T) %>% `*`(1000) #meter
+  }
+  res <- data.table(id_company = tmp02_company[i, id],
+                    Name_company = tmp02_company[i, Name],
+                    id_broker = t1$id, 
+                    Name_broker = t1$Name, 
+                    distance = t2)
+  res_tmp[[i]] <- res
+}
+```
+
+整理結果
+
+company_10km_broker.csv: [id_company, Name_company, id_broker, Name_broker]
+
+```{r}
+res <- res_tmp %>% rbindlist()
+res <- res[distance<=10*1000, ]
+fwrite(x = res, file = "../data_v1/company_10km_broker.csv", row.names = F)
+fwrite(x = tmp02, file = "../data_v1/company_broker_idlonlat.csv", row.names = F)
+```
+
+給順貿: 
+
+- company_10km_broker.csv: [id_company, Name_company, id_broker, Name_broker]
+- company_broker_idlonlat.csv: [id, Name, Type, lon, lat]
+
+END
+===
