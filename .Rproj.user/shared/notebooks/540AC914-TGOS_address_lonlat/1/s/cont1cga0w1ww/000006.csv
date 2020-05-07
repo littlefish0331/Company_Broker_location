@@ -1,2 +1,0 @@
-"0","tmp01$useless_addr <- address_tmp %>% sapply(., addr.SPby.doornum, useless = T, USE.NAMES = F)"
-"0","tmp01$useful_addr <- address_tmp %>% sapply(., addr.SPby.doornum, useless = F, USE.NAMES = F)"

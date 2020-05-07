@@ -1,4 +1,0 @@
-"0","tmp01$clean_addr <- tmp01$clean_addr %>% sapply(., rm.comb.addr, USE.NAMES = F)"
-"0","tmp01$clean_addr <- tmp01$clean_addr %>% "
-"0","  sapply(., addr.SPby.doornum, useless = F) %>% "
-"0","  add.doornum.word(x_vec = .)"

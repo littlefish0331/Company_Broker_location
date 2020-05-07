@@ -1,1 +1,0 @@
-"0","tmp01$clean_addr <- tmp01$useful_addr %>% sapply(., rm.headpostcode) %>% gsub("" +"", """", .)"
