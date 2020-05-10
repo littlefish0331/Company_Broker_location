@@ -13,6 +13,8 @@
 
 - 資料自動每月更新
 
+- 資料範圍增加國外公司與國外券商
+
 ## 緣由
 
 日前同事(順貿)，有個股票趨勢的假說，  
@@ -28,6 +30,12 @@
 - TGOS_address_lonlat.Rmd: 地址轉換成經緯度。
 - FUN.R: 用到的自定義函式。
 - cal_distance.Rmd: 計算公司看券商的距離。
+
+**first version:**
+
+- Geocode by
+  - google sheet
+  - google api
 
 ## 資料說明
 
